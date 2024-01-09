@@ -1,1 +1,1 @@
-
+from .vae_hook import VAEHook
