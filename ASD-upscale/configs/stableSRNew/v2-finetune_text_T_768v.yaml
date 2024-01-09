@@ -3,7 +3,7 @@ model:
   base_learning_rate: 5.0e-05
   target: ldm.models.diffusion.ddpm.LatentDiffusionSRTextWT
   params:
-    # parameterization: "v"
+    parameterization: "v"
     linear_start: 0.00085
     linear_end: 0.0120
     num_timesteps_cond: 1
@@ -11,7 +11,7 @@ model:
     timesteps: 1000
     first_stage_key: image
     cond_stage_key: caption
-    image_size: 512
+    image_size: 768
     channels: 4
     cond_stage_trainable: False   # Note: different from the one we trained before
     conditioning_key: crossattn
@@ -19,11 +19,11 @@ model:
     scale_factor: 0.18215
     use_ema: False
     # for training only
-    # ckpt_path: /mnt/lustre/jywang/code/stable_diffmodels/v2-1_512-ema-pruned.ckpt
+    # ckpt_path: /mnt/lustre/jywang/code/stable_diffmodels/v2-1_768-ema-pruned.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
-    use_usm: True
+    use_usm: False
     #P2 weighting, we do not use in final version
     p2_gamma: ~
     p2_k: ~
@@ -52,13 +52,13 @@ model:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
         # for training only
-        # ckpt_path: /mnt/lustre/jywang/code/stable_diffmodels/v2-1_512-ema-pruned.ckpt
+        # ckpt_path: /mnt/lustre/jywang/code/stable_diffmodels/v2-1_768-ema-pruned.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
           double_z: true
           z_channels: 4
-          resolution: 512
+          resolution: 768
           in_channels: 3
           out_ch: 3
           ch: 128
@@ -120,15 +120,15 @@ degradation:
   noise_range2: [1, 12]
   poisson_scale_range2: [0.05, 1.0]
   gray_noise_prob2: 0.4
-  jpeg_range2: [60, 100]
+  jpeg_range2: [60, 95]
 
-  gt_size: 512
-  no_degradation_prob: 0.01
+  gt_size: 768
+  no_degradation_prob: 0
 
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 6
+    batch_size: 3
     num_workers: 6
     wrap: false
     train:
@@ -136,9 +136,9 @@ data:
       params:
         queue_size: 180
         gt_path: ['/mnt/lustre/share/jywang/dataset/DIV8K/train_HR/', '/mnt/lustre/share/jywang/dataset/df2k_ost/GT/']
-        face_gt_path: '/mnt/lustre/share/jywang/dataset/FFHQ/1024/'
-        num_face: 10000
-        crop_size: 512
+        face_gt_path: ['/mnt/lustre/share/jywang/dataset/FFHQ/1024/', '/mnt/lustre/share/jywang/dataset/FFHQ/ffhq_wild/']
+        num_face: 5000
+        crop_size: 768
         io_backend:
           type: disk
 
@@ -160,14 +160,14 @@ data:
 
         final_sinc_prob: 0.8
 
-        gt_size: 512
+        gt_size: 768
         use_hflip: True
         use_rot: False
     validation:
       target: basicsr.data.realesrgan_dataset.RealESRGANDataset
       params:
         gt_path: /mnt/lustre/share/jywang/dataset/ImageSR/DIV2K/DIV2K_train_HR/
-        crop_size: 512
+        crop_size: 768
         io_backend:
           type: disk
 
@@ -189,7 +189,7 @@ data:
 
         final_sinc_prob: 0.8
 
-        gt_size: 512
+        gt_size: 768
         use_hflip: True
         use_rot: False
 
@@ -202,8 +202,8 @@ test_data:
     test:
       target: basicsr.data.realesrgan_dataset.RealESRGANDataset
       params:
-        gt_path: /mnt/lustre/share/jywang/dataset/ImageSR/DIV2K/DIV2K_train_HR/
-        crop_size: 512
+        gt_path: ['/mnt/lustre/jywang/dataset/ImageSR/Set5/HR/', '/mnt/lustre/jywang/dataset/ImageSR/Set14/HR/']
+        crop_size: 768
         io_backend:
           type: disk
 
@@ -225,20 +225,20 @@ test_data:
 
         final_sinc_prob: 0.8
 
-        gt_size: 512
+        gt_size: 768
         use_hflip: True
         use_rot: False
 
 lightning:
   modelcheckpoint:
     params:
-      every_n_train_steps: 1500
+      every_n_train_steps: 1000
   callbacks:
     image_logger:
       target: main.ImageLogger
       params:
-        batch_frequency: 1500
-        max_images: 4
+        batch_frequency: 1000
+        max_images: 2
         increase_log_steps: False
 
   trainer:
